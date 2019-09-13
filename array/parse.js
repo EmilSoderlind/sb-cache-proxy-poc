@@ -7,9 +7,10 @@ const express = require('express')
 const app = express()
 const port = 3000
 
-var articleList = undefined;
+var articleList = "";
 
 console.log("Parsing from SB-API starting.")
+
 request('https://www.systembolaget.se/api/assortment/products/xml', function (error, response, body) {
     if (!error && response.statusCode == 200) {
       console.info('Download time: %dms', new Date() - startDate)
@@ -46,6 +47,8 @@ request('https://www.systembolaget.se/api/assortment/products/xml', function (er
     }
 })
 
+
+
 function addAPKtoAllArticlceObjects(articleList){
   var count = 0;
 
@@ -81,6 +84,18 @@ function isFloat(n) {
 function isInteger(n) {
     return n === +n && n === (n|0);
 }
+
+
+
+app.get('/dump', (req, res) => {
+  res.set('Content-Type', 'text/html');
+  var listHtml = "<!DOCTYPE html><html lang=\"en\"><head><title>APK DUMP</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\"><script src=\"https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script><script src=\"https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js\"></script></head><body>";
+  for(var i = 0; i<18000; i++){
+    var prod = articleList[i];
+    listHtml = listHtml + "<li class=\"list-group-item\">"+ (i+1) +". "+ prod.Namn +" " + prod.Prisinklmoms + " Kr  " + prod.Alkoholhalt + "</li>"
+  }
+  res.send('<div class=\"container\"><h2>TOP 10 APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
+})
 
 app.get('/', (req, res) => {res.json(articleList)})
 
