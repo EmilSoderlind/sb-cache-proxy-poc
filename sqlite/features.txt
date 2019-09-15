@@ -4,5 +4,6 @@
 3. GraphQL
 4. Automate parse at 3AM. (Cron script?)
 5. Stats on how API have been used in DB
-6. Show last succesfully parse in API
+6. Show last successful parse in API
 7. Send notification if parse didn't work (Mail etc)
+8. Fun stats in table (Total products over time, average APK by category)
