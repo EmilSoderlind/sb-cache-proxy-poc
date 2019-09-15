@@ -12,6 +12,18 @@ const sqlite3 = require('sqlite3').verbose();
 var db;
 
 var articleList = "";
+var busyDB = false;
+var dbTimer;
+
+function dbIsWorking(){
+  dbTimer = new Date()
+  busyDB = false;
+}
+
+function dbIsDone(){
+  busyDB = true;
+  console.info('DB work took: %dms', new Date() - dbTimer)
+}
 
 function addURLtoArticlceObject(articleObject){
   var baseURL = "https:\//www.systembolaget.se/dryck";
@@ -158,6 +170,8 @@ function initializeDB(){
   console.log("Initialize DB")
   console.log("Trying to create Sqlite3 .DB file")
 
+  dbIsWorking()
+
   db = new sqlite3.Database("./APK.db",
       sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE,
       (err) => {
@@ -174,6 +188,9 @@ function initializeDB(){
 }
 
 function createDB(){
+
+  dbIsWorking()
+
   // open the database
   console.log("Trying to connect to sqlite3 DB")
   db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
@@ -185,42 +202,8 @@ function createDB(){
 
   console.log("Creating artikel table")
   db.serialize(() => {
-    db.all(`CREATE TABLE artikel
-              (nr integer primary key,
-              Artikelid integer,
-              Varnummer integer,
-              Namn text,
-              Namn2 text,
-              Prisinklmoms REAL,
-              Pant REAL,
-              Volymiml REAL,
-              PrisPerLiter REAL,
-              Saljstart text,
-              Utgatt text,
-              Varugrupp text,
-              Typ text,
-              Stil text,
-              Forpackning text,
-              Forslutning text,
-              Ursprung text,
-              Ursprunglandnamn text,
-              Producent text,
-              Leverantor text,
-              Argang integer,
-              Provadargang text,
-              Alkoholhalt REAL,
-              Sortiment text,
-              SortimentText text,
-              Ekologisk text,
-              Etiskt text,
-              Koscher text,
-              RavarorBeskrivning text,
-              URL text,
-              APK REAL);`, (err, rows) => {
-      if (err) {
-        console.error(err.message);
-      }
-      console.log(rows);
+    db.all(`CREATE TABLE artikel (nr integer primary key, Artikelid integer,Varnummer integer,Namn text,Namn2 text,Prisinklmoms REAL,Pant REAL,Volymiml REAL,PrisPerLiter REAL,Saljstart text,Utgatt text,Varugrupp text,Typ text,Stil text,Forpackning text,Forslutning text,Ursprung text,Ursprunglandnamn text,Producent text,Leverantor text,Argang integer,Provadargang text,Alkoholhalt REAL,Sortiment text,SortimentText text,Ekologisk text,Etiskt text,Koscher text,RavarorBeskrivning text,URL text,APK REAL);`, (err, rows) => {
+      if (err) {console.error(err.message)}
     });
   });
 
@@ -230,6 +213,8 @@ function createDB(){
     }
     console.log('Closing the database connection.');
   });
+
+  dbIsDone()
 }
 
 // Add APK + URL to list of article objects
@@ -240,23 +225,13 @@ function processArticleObjects(articleList){
     if (err) {
       console.error("error: " + err.message);
     }
-    console.log('Connected to the APK database.');
   });
 
   for (var i = 0; i < articleList.length; i++) {
     addURLtoArticlceObject(articleList[i])
     addAPKtoArticleObject(articleList[i])
-
-    addArticleToDB(articleList[i])
   }
-
-  db.close((err) => {
-    if (err) {
-      return console.error(err.message);
-    }
-    console.log('Closing the database connection.');
-  });
-
+  addArticlesToDB(articleList)
 }
 
 function addAPKtoArticleObject(articleObject) {
@@ -292,79 +267,80 @@ String.prototype.replaceAll = function(str1, str2, ignore){
 
 
 // Require connection to DB
-function addArticleToDB(articleObject){
+function addArticlesToDB(articleList){
+  dbIsWorking()
 
-  /*
-  db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
-    if (err) {
-      console.error("error: " + err.message);
+  addAllArticlesSQLQuery = "INSERT INTO artikel (nr,Artikelid,Varnummer,Namn,Namn2,Prisinklmoms,Pant,Volymiml,PrisPerLiter,Saljstart,Utgatt,Varugrupp,Typ,Stil,Forpackning,Forslutning,Ursprung,Ursprunglandnamn,Producent,Leverantor,Argang,Provadargang,Alkoholhalt,Sortiment,SortimentText,Ekologisk,Etiskt,Koscher,RavarorBeskrivning,URL,APK) VALUES";
+
+  for(var index = 0; index < articleList.length; index++){
+    var addArticleSQLQuery =  "("+
+    articleList[index].nr +",\""+
+    articleList[index].Artikelid +"\",\""+
+    articleList[index].Varnummer +"\",\""+
+    articleList[index].Namn +"\",\""+
+    articleList[index].Namn2 +"\",\""+
+    articleList[index].Prisinklmoms +"\",\""+
+    articleList[index].Pant +"\",\""+
+    articleList[index].Volymiml +"\",\""+
+    articleList[index].PrisPerLiter +"\",\""+
+    articleList[index].Saljstart +"\",\""+
+    articleList[index].Utgått +"\",\""+
+    articleList[index].Varugrupp +"\",\""+
+    articleList[index].Typ +"\",\""+
+    articleList[index].Stil +"\",\""+
+    articleList[index].Forpackning +"\",\""+
+    articleList[index].Forslutning +"\",\""+
+    articleList[index].Ursprung +"\",\""+
+    articleList[index].Ursprunglandnamn +"\",\""+
+    articleList[index].Producent +"\",\""+
+    articleList[index].Leverantor +"\",\""+
+    articleList[index].Argang +"\",\""+
+    articleList[index].Provadargang +"\",\""+
+    articleList[index].Alkoholhalt.replace("%","") +"\",\""+
+    articleList[index].Sortiment +"\",\""+
+    articleList[index].SortimentText +"\",\""+
+    articleList[index].Ekologisk +"\",\""+
+    articleList[index].Etiskt +"\",\""+
+    articleList[index].Koscher +"\",\""+
+    articleList[index].RavarorBeskrivning +"\",\""+
+    articleList[index].URL.replaceAll("\"","") +"\","+
+    articleList[index].APK +")"
+
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("[object Object]","null");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("\"\"","\"");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll(" \"", "");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("\" ", "");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("\"null\"", "null");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("\"undefined\"", "null");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("\", "," ");
+
+    if(index != (articleList.length-1)){
+      addArticleSQLQuery = addArticleSQLQuery + ",";
     }
-    console.log('Connected to the APK database.');
-  });
-  */
+    addAllArticlesSQLQuery = addAllArticlesSQLQuery + addArticleSQLQuery;
+  }
 
-  var addArticleSQLQuery = "INSERT INTO artikel (nr,Artikelid,Varnummer,Namn,Namn2,Prisinklmoms,Pant,Volymiml,PrisPerLiter,Saljstart,Utgatt,Varugrupp,Typ,Stil,Forpackning,Forslutning,Ursprung,Ursprunglandnamn,Producent,Leverantor,Argang,Provadargang,Alkoholhalt,Sortiment,SortimentText,Ekologisk,Etiskt,Koscher,RavarorBeskrivning,URL,APK) VALUES (\""+
-  articleObject.nr +"\",\""+
-  articleObject.Artikelid +"\",\""+
-  articleObject.Varnummer +"\",\""+
-  articleObject.Namn +"\",\""+
-  articleObject.Namn2 +"\",\""+
-  articleObject.Prisinklmoms +"\",\""+
-  articleObject.Pant +"\",\""+
-  articleObject.Volymiml +"\",\""+
-  articleObject.PrisPerLiter +"\",\""+
-  articleObject.Saljstart +"\",\""+
-  articleObject.Utgått +"\",\""+
-  articleObject.Varugrupp +"\",\""+
-  articleObject.Typ +"\",\""+
-  articleObject.Stil +"\",\""+
-  articleObject.Forpackning +"\",\""+
-  articleObject.Forslutning +"\",\""+
-  articleObject.Ursprung +"\",\""+
-  articleObject.Ursprunglandnamn +"\",\""+
-  articleObject.Producent +"\",\""+
-  articleObject.Leverantor +"\",\""+
-  articleObject.Argang +"\",\""+
-  articleObject.Provadargang +"\",\""+
-  articleObject.Alkoholhalt.replace("%","") +"\",\""+
-  articleObject.Sortiment +"\",\""+
-  articleObject.SortimentText +"\",\""+
-  articleObject.Ekologisk +"\",\""+
-  articleObject.Etiskt +"\",\""+
-  articleObject.Koscher +"\",\""+
-  articleObject.RavarorBeskrivning +"\",\""+
-  articleObject.URL.replaceAll("\"","") +"\","+
-  articleObject.APK +");"
+  addAllArticlesSQLQuery = addAllArticlesSQLQuery + ";"
 
-  addArticleSQLQuery = addArticleSQLQuery.replaceAll("[object Object]","null");
-  addArticleSQLQuery = addArticleSQLQuery.replaceAll("\"\"","\"");
-  addArticleSQLQuery = addArticleSQLQuery.replaceAll(" \"", "");
-  addArticleSQLQuery = addArticleSQLQuery.replaceAll("\" ", "");
-  addArticleSQLQuery = addArticleSQLQuery.replaceAll("\"null\"", "null");
-  addArticleSQLQuery = addArticleSQLQuery.replaceAll("\"undefined\"", "null");
-  addArticleSQLQuery = addArticleSQLQuery.replaceAll("\", "," ");
-
-
+  console.log("Adding articles to db\n\n " + addAllArticlesSQLQuery);
   db.serialize(() => {
-    db.all(addArticleSQLQuery, (err, rows) => {
+    db.all(addAllArticlesSQLQuery, (err, rows) => {
       if (err) {
         console.log("Adding to DB Error:")
         console.error(err.message);
         console.log("Query: " + addArticleSQLQuery)
       }
-      //console.log("Adding article: " + rows);
+
+      db.close((err) => {
+        if (err) {
+          return console.error(err.message);
+        }
+      });
+
+      dbIsDone()
+      console.log("Articles added to DB");
     });
   });
-
-  /*
-  db.close((err) => {
-    if (err) {
-      return console.error(err.message);
-    }
-    console.log('Closing the database connection.');
-  });
-  */
-
 }
 
 function parseSB_API(){
@@ -402,6 +378,7 @@ function parseSB_API(){
 }
 
 function main(){
+  console.log("Main()")
 
   app.get('/dump', (req, res) => {
     res.set('Content-Type', 'text/html');
@@ -413,19 +390,31 @@ function main(){
     res.send('<div class=\"container\"><h2>TOP 10 APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
   })
 
-  app.get('/db/', (req, res) => {
+  app.get('/sqlite/:numberOfArticles', (req, res) => {
+    var start = new Date()
+    dbIsWorking()
+    db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
+      if (err) {
+        console.error("error: " + err.message);
+      }
 
+      db.serialize(() => {
+        db.all(`SELECT * FROM artikel ORDER BY APK DESC LIMIT `+ req.params.numberOfArticles +`;`, (err, rows) => {
+          if (err) {
+            console.error(err.message);
+          }
+          res.send(rows);
+          console.info('Sqlite3 | Response time: %dms', new Date() - start)
 
-    db.serialize(() => {
-      db.all(`SELECT * FROM artikel ORDER BY APK DESC;`, (err, rows) => {
-        if (err) {
-          console.error(err.message);
-        }
-        console.log(rows);
-        res.send(rows);
+          db.close((err) => {
+            if (err) {
+              return console.error(err.message);
+            }
+            dbIsDone()
+          });
+        });
       });
     });
-
   })
 
   app.get('/', (req, res) => {
@@ -434,7 +423,7 @@ function main(){
     }else{
       var start = new Date()
       res.json(articleList)
-      console.info('Response time: %dms', new Date() - start)
+      console.info('Array | Response time: %dms', new Date() - start)
     }
   })
 
@@ -445,16 +434,16 @@ function main(){
     }else{
       var start = new Date()
       res.json(articleList.slice(0, req.params.numberOfArticles))
-      console.info('Response time: %dms', new Date() - start)
+      console.info('Array | Response time: %dms', new Date() - start)
     }
 
   })
   app.listen(port, () => console.log(`Listening on port ${port}!`))
 
   initializeDB();
-
   parseSB_API()
 
+  console.log("Main() - DONE")
 }
 
 main();

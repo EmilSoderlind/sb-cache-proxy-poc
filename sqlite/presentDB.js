@@ -30,7 +30,7 @@ var db;
       });
 
       db.serialize(() => {
-        db.all(`SELECT * FROM artikel ORDER BY APK DESC;`, (err, rows) => {
+        db.all(`SELECT * FROM artikel WHERE Producent = "Phusion Projects" ORDER BY APK DESC LIMIT 300;`, (err, rows) => {
           if (err) {
             console.error(err.message);
           }
