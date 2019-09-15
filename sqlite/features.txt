@@ -1,0 +1,8 @@
+# Nice features
+1. Filter on category (Öl, vin, etc)
+2. Filter on sortiment (BS etc)
+3. GraphQL
+4. Automate parse at 3AM. (Cron script?)
+5. Stats on how API have been used in DB
+6. Show last succesfully parse in API
+7. Send notification if parse didn't work (Mail etc)
