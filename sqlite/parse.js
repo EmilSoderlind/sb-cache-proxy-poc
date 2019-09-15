@@ -381,6 +381,7 @@ function main(){
   console.log("Main()")
 
   app.get('/dump', (req, res) => {
+    return;
     res.set('Content-Type', 'text/html');
     var listHtml = "<!DOCTYPE html><html lang=\"en\"><head><title>APK DUMP</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\"><script src=\"https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script><script src=\"https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js\"></script></head><body>";
     for(var i = 0; i<500; i++){
@@ -391,6 +392,7 @@ function main(){
   })
 
   app.get('/sqlite/:numberOfArticles', (req, res) => {
+
     var start = new Date()
     dbIsWorking()
     db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
@@ -440,8 +442,8 @@ function main(){
   })
   app.listen(port, () => console.log(`Listening on port ${port}!`))
 
-  initializeDB();
-  parseSB_API()
+  //initializeDB();
+  //parseSB_API()
 
   console.log("Main() - DONE")
 }
