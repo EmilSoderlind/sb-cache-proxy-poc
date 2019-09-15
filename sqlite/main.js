@@ -1,6 +1,7 @@
 var request = require('request');
 let xmlParser = require('xml2json');
 var slugify = require('slugify')
+var fs = require("fs");
 
 var startDate = new Date()
 
@@ -12,18 +13,6 @@ const sqlite3 = require('sqlite3').verbose();
 var db;
 
 var articleList = "";
-var busyDB = false;
-var dbTimer;
-
-function dbIsWorking(){
-  dbTimer = new Date()
-  busyDB = false;
-}
-
-function dbIsDone(){
-  busyDB = true;
-  console.info('DB work took: %dms', new Date() - dbTimer)
-}
 
 function addURLtoArticlceObject(articleObject){
   var baseURL = "https:\//www.systembolaget.se/dryck";
@@ -166,11 +155,11 @@ function addURLtoArticlceObject(articleObject){
   return createdURL;
 }
 
+
 function initializeDB(){
   console.log("Initialize DB")
-  console.log("Trying to create Sqlite3 .DB file")
 
-  dbIsWorking()
+  console.log("Trying to create Sqlite3 .DB file")
 
   db = new sqlite3.Database("./APK.db",
       sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE,
@@ -189,7 +178,6 @@ function initializeDB(){
 
 function createDB(){
 
-  dbIsWorking()
 
   // open the database
   console.log("Trying to connect to sqlite3 DB")
@@ -214,7 +202,6 @@ function createDB(){
     console.log('Closing the database connection.');
   });
 
-  dbIsDone()
 }
 
 // Add APK + URL to list of article objects
@@ -268,7 +255,6 @@ String.prototype.replaceAll = function(str1, str2, ignore){
 
 // Require connection to DB
 function addArticlesToDB(articleList){
-  dbIsWorking()
 
   addAllArticlesSQLQuery = "INSERT INTO artikel (nr,Artikelid,Varnummer,Namn,Namn2,Prisinklmoms,Pant,Volymiml,PrisPerLiter,Saljstart,Utgatt,Varugrupp,Typ,Stil,Forpackning,Forslutning,Ursprung,Ursprunglandnamn,Producent,Leverantor,Argang,Provadargang,Alkoholhalt,Sortiment,SortimentText,Ekologisk,Etiskt,Koscher,RavarorBeskrivning,URL,APK) VALUES";
 
@@ -322,13 +308,11 @@ function addArticlesToDB(articleList){
 
   addAllArticlesSQLQuery = addAllArticlesSQLQuery + ";"
 
-  console.log("Adding articles to db\n\n " + addAllArticlesSQLQuery);
   db.serialize(() => {
     db.all(addAllArticlesSQLQuery, (err, rows) => {
       if (err) {
         console.log("Adding to DB Error:")
         console.error(err.message);
-        console.log("Query: " + addArticleSQLQuery)
       }
 
       db.close((err) => {
@@ -337,7 +321,6 @@ function addArticlesToDB(articleList){
         }
       });
 
-      dbIsDone()
       console.log("Articles added to DB");
     });
   });
@@ -394,7 +377,7 @@ function main(){
   app.get('/sqlite/:numberOfArticles', (req, res) => {
 
     var start = new Date()
-    dbIsWorking()
+
     db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
       if (err) {
         console.error("error: " + err.message);
@@ -412,7 +395,6 @@ function main(){
             if (err) {
               return console.error(err.message);
             }
-            dbIsDone()
           });
         });
       });
@@ -442,8 +424,11 @@ function main(){
   })
   app.listen(port, () => console.log(`Listening on port ${port}!`))
 
-  //initializeDB();
-  //parseSB_API()
+  if(process.argv[2] = "parse"){
+    console.log("Performing reparse!")
+    initializeDB();
+    parseSB_API()
+  }
 
   console.log("Main() - DONE")
 }
