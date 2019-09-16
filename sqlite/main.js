@@ -322,6 +322,7 @@ function addArticlesToDB(articleList){
       });
 
       console.log("Articles added to DB");
+      console.log("Parse + DB time: %dms", new Date() - startDate)
     });
   });
 }
@@ -339,7 +340,6 @@ function parseSB_API(){
 
         articleList = resultJSON["artiklar"]["artikel"];
 
-
         var start = new Date()
         processArticleObjects(articleList)
         console.info('APK + URL processing time: %dms', new Date() - start)
@@ -350,7 +350,7 @@ function parseSB_API(){
         });
         console.info('Sorting time: %dms', new Date() - start)
 
-        console.info('Total time: %dms', new Date() - startDate)
+        console.info('Total parse time: %dms', new Date() - startDate)
 
         console.log("DONE\nAntal produkter: " + Object.keys(articleList).length + "\n")
 
@@ -360,11 +360,10 @@ function parseSB_API(){
   })
 }
 
-function main(){
-  console.log("Main()")
+function openEndPoints(){
 
+  // HTML endpoint with top 500 from ARRAY
   app.get('/dump', (req, res) => {
-    return;
     res.set('Content-Type', 'text/html');
     var listHtml = "<!DOCTYPE html><html lang=\"en\"><head><title>APK DUMP</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\"><script src=\"https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script><script src=\"https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js\"></script></head><body>";
     for(var i = 0; i<500; i++){
@@ -374,15 +373,13 @@ function main(){
     res.send('<div class=\"container\"><h2>TOP 10 APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
   })
 
+  // Return top :numberOfArticles from SQLITE3 DB-file.
   app.get('/sqlite/:numberOfArticles', (req, res) => {
-
     var start = new Date()
-
     db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
       if (err) {
         console.error("error: " + err.message);
       }
-
       db.serialize(() => {
         db.all(`SELECT * FROM artikel ORDER BY APK DESC LIMIT `+ req.params.numberOfArticles +`;`, (err, rows) => {
           if (err) {
@@ -402,6 +399,11 @@ function main(){
   })
 
   app.get('/', (req, res) => {
+    res.send("/array/# \n\n /sqlite/#")
+  })
+
+  // Return all articles from ARRAY (memory)
+  app.get('/array', (req, res) => {
     if(articleList == undefined){
       res.sendStatus(204)
     }else{
@@ -411,8 +413,8 @@ function main(){
     }
   })
 
-  app.get('/:numberOfArticles', (req, res) => {
-
+  // Return top :numberOfArticles from ARRAY (memory)
+  app.get('/array/:numberOfArticles', (req, res) => {
     if(articleList == undefined){
       res.sendStatus(204)
     }else{
@@ -423,11 +425,19 @@ function main(){
 
   })
   app.listen(port, () => console.log(`Listening on port ${port}!`))
+}
+
+function main(){
+  console.log("Main()")
+
+  openEndPoints()
 
   if(process.argv[2] = "parse"){
+
     console.log("Performing reparse!")
     initializeDB();
     parseSB_API()
+
   }
 
   console.log("Main() - DONE")
