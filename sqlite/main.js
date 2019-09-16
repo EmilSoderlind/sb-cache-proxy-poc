@@ -340,18 +340,19 @@ function parseSB_API(){
 
         articleList = resultJSON["artiklar"]["artikel"];
 
+        // Remove ":s from number attributes
+
         var start = new Date()
         processArticleObjects(articleList)
-        console.info('APK + URL processing time: %dms', new Date() - start)
 
         var start = new Date()
         articleList.sort(function(a, b) {
           return parseFloat(b.APK) - parseFloat(a.APK);
         });
+
         console.info('Sorting time: %dms', new Date() - start)
-
+        console.info('APK + URL processing time: %dms', new Date() - start)
         console.info('Total parse time: %dms', new Date() - startDate)
-
         console.log("DONE\nAntal produkter: " + Object.keys(articleList).length + "\n")
 
       }else{
@@ -368,7 +369,7 @@ function openEndPoints(){
     var listHtml = "<!DOCTYPE html><html lang=\"en\"><head><title>APK DUMP</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\"><script src=\"https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script><script src=\"https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js\"></script></head><body>";
     for(var i = 0; i<500; i++){
       var prod = articleList[i];
-      listHtml = listHtml + "<li class=\"list-group-item\">"+ (i+1) +". "+ prod.Namn +" " + prod.Prisinklmoms + " Kr  <a href="+addURLtoArticlceObject(prod)+">"+addURLtoArticlceObject(prod)+"</a></li>"
+      listHtml = listHtml + "<li class=\"list-group-item\">"+ (i+1) +". "+ prod.Namn +" " + prod.APK + " APK  <a href="+addURLtoArticlceObject(prod)+">"+addURLtoArticlceObject(prod)+"</a></li>"
     }
     res.send('<div class=\"container\"><h2>TOP 10 APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
   })
@@ -432,7 +433,7 @@ function main(){
 
   openEndPoints()
 
-  if(process.argv[2] = "parse"){
+  if(process.argv[2] == "parse"){
 
     console.log("Performing reparse!")
     initializeDB();
