@@ -14,6 +14,8 @@ var db;
 
 var articleList = "";
 
+// Create and set .URL attribute in article JSON-objects
+// URL leads to the articles www.systembolaget.se/... page
 function addURLtoArticlceObject(articleObject){
   var baseURL = "https:\//www.systembolaget.se/dryck";
   var categoryURL = "";
@@ -176,9 +178,8 @@ function initializeDB(){
       console.log("Initialize DB - DONE")
 }
 
+// Create Artikel-table in Sqlite3 DB-file
 function createDB(){
-
-
   // open the database
   console.log("Trying to connect to sqlite3 DB")
   db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
@@ -201,7 +202,6 @@ function createDB(){
     }
     console.log('Closing the database connection.');
   });
-
 }
 
 // Add APK + URL to list of article objects
