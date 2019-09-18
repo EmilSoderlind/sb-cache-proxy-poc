@@ -16,7 +16,7 @@ var memDB = new sqlite3.Database(':memory:');
 var articleList = "";
 
 
-// Removing quotation marks from numbers in JSON object
+// Removing quotation marks from numbers in JSON object + set alkoholhalt as number
 // Maybe remove?
 function removeQMFromNumbers(articleObject){
   articleObject.Pant = Number(articleObject.Pant)
@@ -29,6 +29,7 @@ function removeQMFromNumbers(articleObject){
   articleObject.Argang = Number(articleObject.Argang)
   articleObject.Etiskt = Number(articleObject.Etiskt)
   articleObject.Ekologisk = Number(articleObject.Ekologisk)
+  articleObject.Alkoholhalt = parseFloat(String(articleObject.Alkoholhalt).replace("%",""));
 }
 
 // If field is undefined - Set to null. (To make same output as SQL - look similar)
@@ -306,7 +307,7 @@ function createDB(dbObj){
 
   console.log("Creating artikel table")
   dbObj.serialize(() => {
-    dbObj.all(`CREATE TABLE artikel (nr integer primary key, Artikelid integer,Varnummer integer,Namn text,Namn2 text,Prisinklmoms REAL,Pant REAL,Volymiml REAL,PrisPerLiter REAL,Saljstart text,Utgatt text,Varugrupp text,Typ text,Stil text,Forpackning text,Forslutning text,Ursprung text,Ursprunglandnamn text,Producent text,Leverantor text,Argang integer,Provadargang text,Alkoholhalt REAL,Sortiment text,SortimentText text,Ekologisk REAL,Etiskt REAL,Koscher text,RavarorBeskrivning text,URL text,APK REAL);`, (err, rows) => {
+    dbObj.all(`CREATE TABLE artikel (nr integer primary key, Artikelid integer,Varnummer integer,Namn text,Namn2 text,Prisinklmoms REAL,Pant REAL,Volymiml REAL,PrisPerLiter REAL,Saljstart text,Utgatt text,Varugrupp text,Typ text,Stil text,Forpackning text,Forslutning text,Ursprung text,Ursprunglandnamn text,Producent text,Leverantor text,Argang integer,Provadargang text,Alkoholhalt REAL,Sortiment text,SortimentText text,Ekologisk REAL,Etiskt REAL,Koscher text,RavarorBeskrivning text,URL text,APKMedPant REAL, APK REAL);`, (err, rows) => {
       if (err) {console.error(err.message)}
     });
   });
@@ -339,6 +340,7 @@ function addAPKtoArticleObject(articleObject) {
   var price = parseFloat(articleObject.Prisinklmoms);
   var volume = parseFloat(articleObject.Volymiml);
   var alcohol = parseFloat(String(articleObject.Alkoholhalt).replace("%",""));
+  var pant = articleObject.Pant;
 
   if(Number.isNaN(price) || Number.isNaN(volume) || Number.isNaN(alcohol)){
     console.error("---------------------")
@@ -351,6 +353,12 @@ function addAPKtoArticleObject(articleObject) {
   }
 
   articleObject.APK = ((alcohol/100)*volume)/price;
+
+  if(pant == undefined){
+    articleObject.APKMedPant = articleObject.APK
+  }else{
+    articleObject.APKMedPant = ((alcohol/100)*volume)/(price + parseFloat(pant));
+  }
 }
 
 function isFloat(n) {
@@ -369,7 +377,7 @@ String.prototype.replaceAll = function(str1, str2, ignore){
 // Require connection to DB (db-variable has to be assigned and connected)
 function addArticlesToDB(dbObj, articleList){
 
-  addAllArticlesSQLQuery = "INSERT INTO artikel (nr,Artikelid,Varnummer,Namn,Namn2,Prisinklmoms,Pant,Volymiml,PrisPerLiter,Saljstart,Utgatt,Varugrupp,Typ,Stil,Forpackning,Forslutning,Ursprung,Ursprunglandnamn,Producent,Leverantor,Argang,Provadargang,Alkoholhalt,Sortiment,SortimentText,Ekologisk,Etiskt,Koscher,RavarorBeskrivning,URL,APK) VALUES";
+  addAllArticlesSQLQuery = "INSERT INTO artikel (nr,Artikelid,Varnummer,Namn,Namn2,Prisinklmoms,Pant,Volymiml,PrisPerLiter,Saljstart,Utgatt,Varugrupp,Typ,Stil,Forpackning,Forslutning,Ursprung,Ursprunglandnamn,Producent,Leverantor,Argang,Provadargang,Alkoholhalt,Sortiment,SortimentText,Ekologisk,Etiskt,Koscher,RavarorBeskrivning,URL,APKMedPant,APK) VALUES";
 
   for(var index = 0; index < articleList.length; index++){
     var addArticleSQLQuery =  "("+
@@ -394,8 +402,8 @@ function addArticlesToDB(dbObj, articleList){
     articleList[index].Producent +"\",\""+
     articleList[index].Leverantor +"\",\""+
     articleList[index].Argang +"\",\""+
-    articleList[index].Provadargang +"\",\""+
-    articleList[index].Alkoholhalt.replace("%","") +"\",\""+
+    articleList[index].Provadargang +"\","+
+    articleList[index].Alkoholhalt +",\""+
     articleList[index].Sortiment +"\",\""+
     articleList[index].SortimentText +"\",\""+
     articleList[index].Ekologisk +"\",\""+
@@ -403,6 +411,7 @@ function addArticlesToDB(dbObj, articleList){
     articleList[index].Koscher +"\",\""+
     articleList[index].RavarorBeskrivning +"\",\""+
     articleList[index].URL.replaceAll("\"","") +"\","+
+    articleList[index].APKMedPant +","+
     articleList[index].APK +")"
 
     addArticleSQLQuery = addArticleSQLQuery.replaceAll("[object Object]","null");
