@@ -19,13 +19,13 @@ var articleList = "";
 // Removing quotation marks from numbers in JSON object
 // Maybe remove?
 function removeQMFromNumbers(articleObject){
+  articleObject.Pant = Number(articleObject.Pant)
   articleObject.nr = Number(articleObject.nr)
   articleObject.Artikelid = Number(articleObject.Artikelid)
   articleObject.Varnummer = Number(articleObject.Varnummer)
   articleObject.Prisinklmoms = Number(articleObject.Prisinklmoms)
   articleObject.Volymiml = Number(articleObject.Volymiml)
   articleObject.PrisPerLiter = Number(articleObject.PrisPerLiter)
-  articleObject.Pant = Number(articleObject.Pant)
   articleObject.Argang = Number(articleObject.Argang)
   articleObject.Etiskt = Number(articleObject.Etiskt)
   articleObject.Ekologisk = Number(articleObject.Ekologisk)
