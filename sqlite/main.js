@@ -11,8 +11,117 @@ const port = 3000
 
 const sqlite3 = require('sqlite3').verbose();
 var db;
+var memDB = new sqlite3.Database(':memory:');
 
 var articleList = "";
+
+
+// Removing quotation marks from numbers in JSON object
+// Maybe remove?
+function removeQMFromNumbers(articleObject){
+  articleObject.nr = Number(articleObject.nr)
+  articleObject.Artikelid = Number(articleObject.Artikelid)
+  articleObject.Varnummer = Number(articleObject.Varnummer)
+  articleObject.Prisinklmoms = Number(articleObject.Prisinklmoms)
+  articleObject.Volymiml = Number(articleObject.Volymiml)
+  articleObject.PrisPerLiter = Number(articleObject.PrisPerLiter)
+  articleObject.Pant = Number(articleObject.Pant)
+  articleObject.Argang = Number(articleObject.Argang)
+  articleObject.Etiskt = Number(articleObject.Etiskt)
+  articleObject.Ekologisk = Number(articleObject.Ekologisk)
+}
+
+// If field is undefined - Set to null. (To make same output as SQL - look similar)
+// Maybe remove?
+function setEmptyFieldsToNull(articleObject){
+  if(JSON.stringify(articleObject.nr) == "null"){
+    articleObject.nr  = "null";
+  }
+  if(JSON.stringify(articleObject.Artikelid) == "null"){
+    articleObject.Artikelid  = "null";
+  }
+  if(JSON.stringify(articleObject.Varnummer) == "null"){
+    articleObject.Varnummer  = "null";
+  }
+  if(JSON.stringify(articleObject.Namn) == "null"){
+    articleObject.Namn  = "null";
+  }
+  if(JSON.stringify(articleObject.Namn2) == "null"){
+    articleObject.Namn2  = "null";
+  }
+  if(JSON.stringify(articleObject.Prisinklmoms) == "null"){
+    articleObject.Prisinklmoms  = "null";
+  }
+  if(JSON.stringify(articleObject.Pant) == "null"){
+    articleObject.Pant  = "null";
+  }
+  if(JSON.stringify(articleObject.Volymiml) == "null"){
+    articleObject.Volymiml  = "null";
+  }
+  if(JSON.stringify(articleObject.PrisPerLiter) == "null"){
+    articleObject.PrisPerLiter  = "null";
+  }
+  if(JSON.stringify(articleObject.Saljstart) == "null"){
+    articleObject.nSaljstartr  = "null";
+  }
+  if(JSON.stringify(articleObject.Utgått) == "null"){
+    articleObject.Utgått  = "null";
+  }
+  if(JSON.stringify(articleObject.Varugrupp) == "null"){
+    articleObject.Varugrupp  = "null";
+  }
+  if(JSON.stringify(articleObject.Typ) == "null"){
+    articleObject.Typ  = "null";
+  }
+  if(JSON.stringify(articleObject.Stil) == "null"){
+    articleObject.Stil  = "null";
+  }
+  if(JSON.stringify(articleObject.Forpackning) == "null"){
+    articleObject.Forpackning  = "null";
+  }
+  if(JSON.stringify(articleObject.Forslutning) == "null"){
+    articleObject.Forslutning  = "null";
+  }
+  if(JSON.stringify(articleObject.Ursprung) == "null"){
+    articleObject.Ursprung  = "null";
+  }
+  if(JSON.stringify(articleObject.Ursprunglandnamn) == "null"){
+    articleObject.Ursprunglandnamn  = "null";
+  }
+  if(JSON.stringify(articleObject.Producent) == "null"){
+    articleObject.Producent  = "null";
+  }
+  if(JSON.stringify(articleObject.Leverantor) == "null"){
+    articleObject.Leverantor  = "null";
+  }
+  if(JSON.stringify(articleObject.Argang) == "null"){
+    articleObject.Argang  = "null";
+  }
+  if(JSON.stringify(articleObject.Provadargang) == "null"){
+    articleObject.Provadargang  = "null";
+  }
+  if(JSON.stringify(articleObject.Alkoholhalt) == "null"){
+    articleObject.Alkoholhalt  = "null";
+  }
+  if(JSON.stringify(articleObject.Sortiment) == "null"){
+    articleObject.Sortiment  = "null";
+  }
+  if(JSON.stringify(articleObject.SortimentText) == "null"){
+    articleObject.SortimentText  = "null";
+  }
+  if(JSON.stringify(articleObject.Ekologisk) == "null"){
+    articleObject.Ekologisk  = "null";
+  }
+  if(JSON.stringify(articleObject.Etiskt) == "null"){
+    articleObject.Etiskt  = "null";
+  }
+  if(JSON.stringify(articleObject.Koscher) == "null"){
+    articleObject.Koscher  = "null";
+  }
+  if(JSON.stringify(articleObject.RavarorBeskrivning) == "null"){
+    articleObject.RavarorBeskrivning  = "null";
+  }
+}
 
 // Create and set .URL attribute in article JSON-objects
 // URL leads to the articles www.systembolaget.se/... page
@@ -157,8 +266,7 @@ function addURLtoArticlceObject(articleObject){
   return createdURL;
 }
 
-
-function initializeDB(){
+function initializeDBFile(){
   console.log("Initialize DB")
 
   console.log("Trying to create Sqlite3 .DB file")
@@ -170,7 +278,9 @@ function initializeDB(){
           console.log("ERROR in creating sqlite3 DB - " + err)
         }else{
           console.log("Created sqlite3 DB")
-          createDB()
+
+          createDBFile()
+          createDB(db)
         }
           // do your thing
       });
@@ -178,10 +288,8 @@ function initializeDB(){
       console.log("Initialize DB - DONE")
 }
 
-// Create Artikel-table in Sqlite3 DB-file
-function createDB(){
-  // open the database
-  console.log("Trying to connect to sqlite3 DB")
+function createDBFile(){
+
   db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
       console.error("error: " + err.message);
@@ -189,19 +297,21 @@ function createDB(){
     console.log('Connected to the APK database.');
   });
 
+}
+
+// Create Artikel-table in Sqlite3 DB-file
+function createDB(dbObj){
+  // open the database
+  console.log("Trying to connect to sqlite3 DB")
+
   console.log("Creating artikel table")
-  db.serialize(() => {
-    db.all(`CREATE TABLE artikel (nr integer primary key, Artikelid integer,Varnummer integer,Namn text,Namn2 text,Prisinklmoms REAL,Pant REAL,Volymiml REAL,PrisPerLiter REAL,Saljstart text,Utgatt text,Varugrupp text,Typ text,Stil text,Forpackning text,Forslutning text,Ursprung text,Ursprunglandnamn text,Producent text,Leverantor text,Argang integer,Provadargang text,Alkoholhalt REAL,Sortiment text,SortimentText text,Ekologisk text,Etiskt text,Koscher text,RavarorBeskrivning text,URL text,APK REAL);`, (err, rows) => {
+  dbObj.serialize(() => {
+    dbObj.all(`CREATE TABLE artikel (nr integer primary key, Artikelid integer,Varnummer integer,Namn text,Namn2 text,Prisinklmoms REAL,Pant REAL,Volymiml REAL,PrisPerLiter REAL,Saljstart text,Utgatt text,Varugrupp text,Typ text,Stil text,Forpackning text,Forslutning text,Ursprung text,Ursprunglandnamn text,Producent text,Leverantor text,Argang integer,Provadargang text,Alkoholhalt REAL,Sortiment text,SortimentText text,Ekologisk REAL,Etiskt REAL,Koscher text,RavarorBeskrivning text,URL text,APK REAL);`, (err, rows) => {
       if (err) {console.error(err.message)}
     });
   });
 
-  db.close((err) => {
-    if (err) {
-      return console.error(err.message);
-    }
-    console.log('Closing the database connection.');
-  });
+
 }
 
 // Add APK + URL to list of article objects
@@ -217,8 +327,11 @@ function processArticleObjects(articleList){
   for (var i = 0; i < articleList.length; i++) {
     addURLtoArticlceObject(articleList[i])
     addAPKtoArticleObject(articleList[i])
+    removeQMFromNumbers(articleList[i])
+    setEmptyFieldsToNull(articleList[i])
   }
-  addArticlesToDB(articleList)
+  addArticlesToDB(memDB,articleList);
+  addArticlesToDB(db,articleList)
 }
 
 function addAPKtoArticleObject(articleObject) {
@@ -254,7 +367,7 @@ String.prototype.replaceAll = function(str1, str2, ignore){
 
 // Add JSON-list of articles to Sqlite3 DB-file.
 // Require connection to DB (db-variable has to be assigned and connected)
-function addArticlesToDB(articleList){
+function addArticlesToDB(dbObj, articleList){
 
   addAllArticlesSQLQuery = "INSERT INTO artikel (nr,Artikelid,Varnummer,Namn,Namn2,Prisinklmoms,Pant,Volymiml,PrisPerLiter,Saljstart,Utgatt,Varugrupp,Typ,Stil,Forpackning,Forslutning,Ursprung,Ursprunglandnamn,Producent,Leverantor,Argang,Provadargang,Alkoholhalt,Sortiment,SortimentText,Ekologisk,Etiskt,Koscher,RavarorBeskrivning,URL,APK) VALUES";
 
@@ -308,18 +421,12 @@ function addArticlesToDB(articleList){
 
   addAllArticlesSQLQuery = addAllArticlesSQLQuery + ";"
 
-  db.serialize(() => {
-    db.all(addAllArticlesSQLQuery, (err, rows) => {
+  dbObj.serialize(() => {
+    dbObj.all(addAllArticlesSQLQuery, (err, rows) => {
       if (err) {
         console.log("Adding to DB Error:")
         console.error(err.message);
       }
-
-      db.close((err) => {
-        if (err) {
-          return console.error(err.message);
-        }
-      });
 
       console.log("Articles added to DB");
       console.log("Parse + DB time: %dms", new Date() - startDate)
@@ -374,33 +481,49 @@ function openEndPoints(){
     res.send('<div class=\"container\"><h2>TOP 10 APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
   })
 
+  // Return top :numberOfArticles from SQLITE3 in-memory
+  app.get('/sqlite-mem/:numberOfArticles', (req, res) => {
+    var start = new Date()
+
+    memDB.serialize(() => {
+          memDB.all(`SELECT * FROM artikel ORDER BY APK DESC LIMIT `+ req.params.numberOfArticles +`;`, (err, rows) => {
+            if (err) {
+              console.error(err.message);
+            }
+            res.send(rows);
+            console.info('Sqlite3 (in-memory) | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+
+          });
+        });
+  })
+
   // Return top :numberOfArticles from SQLITE3 DB-file.
-  app.get('/sqlite/:numberOfArticles', (req, res) => {
+  app.get('/sqlite-disk/:numberOfArticles', (req, res) => {
     var start = new Date()
     db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
-      if (err) {
-        console.error("error: " + err.message);
-      }
-      db.serialize(() => {
-        db.all(`SELECT * FROM artikel ORDER BY APK DESC LIMIT `+ req.params.numberOfArticles +`;`, (err, rows) => {
-          if (err) {
-            console.error(err.message);
-          }
-          res.send(rows);
-          console.info('Sqlite3 | Response time: %dms', new Date() - start)
-
-          db.close((err) => {
+        if (err) {
+          console.error("error: " + err.message);
+        }
+        db.serialize(() => {
+          db.all(`SELECT * FROM artikel ORDER BY APK DESC LIMIT `+ req.params.numberOfArticles +`;`, (err, rows) => {
             if (err) {
-              return console.error(err.message);
+              console.error(err.message);
             }
+            res.send(rows);
+            console.info('Sqlite3 (from disk) | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+
+            db.close((err) => {
+              if (err) {
+                return console.error(err.message);
+              }
+            });
           });
         });
       });
-    });
   })
 
   app.get('/', (req, res) => {
-    res.send("/array/# \n\n /sqlite/#")
+    res.send("/array/# \n\n /sqlite-mem/# \n\n /sqlite-disk/#")
   })
 
   // Return all articles from ARRAY (memory)
@@ -421,7 +544,7 @@ function openEndPoints(){
     }else{
       var start = new Date()
       res.json(articleList.slice(0, req.params.numberOfArticles))
-      console.info('Array | Response time: %dms', new Date() - start)
+      console.info('Array | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
     }
 
   })
@@ -436,7 +559,9 @@ function main(){
   if(process.argv[2] == "parse"){
 
     console.log("Performing reparse!")
-    initializeDB();
+    createDB(memDB);
+
+    initializeDBFile();
     parseSB_API()
 
   }
