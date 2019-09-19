@@ -251,6 +251,13 @@
 * Type: Float
 * Example: 2.589928057553957
 
+## 33. **APKScore**
+* Swe: < Not available in SB API >
+* Eng: APKScore
+* Desc: APK Score. Substitute to APK-value to make it easier to compare different products APK. Score = APK-of-product/Max-APK-found. Number between 1 and 100.
+* Type: Float
+* Example: 97
+
 ## Appendix A (Note: Not up-to-date with rest of document)
 ### Example JSON
 {
