@@ -261,6 +261,7 @@ function addURLtoArticlceObject(articleObject){
   nameURL = nameURL.replaceAll("\'","")
   nameURL = nameURL.replaceAll("!","")
   nameURL = slugify(nameURL);
+  nameURL = nameURL.replaceAll("-and-","-")
 
   var createdURL = baseURL+"/"+categoryURL+"/"+nameURL+"-"+numberURL;
   articleObject.URL = createdURL;
@@ -325,12 +326,26 @@ function processArticleObjects(articleList){
     }
   });
 
+  // Find max APK to calculate APKScore
+  var maxAPKFound = 0;
+
   for (var i = 0; i < articleList.length; i++) {
     addURLtoArticlceObject(articleList[i])
     addAPKtoArticleObject(articleList[i])
     removeQMFromNumbers(articleList[i])
     setEmptyFieldsToNull(articleList[i])
+
+    // Max APK to calculate APKScore
+    if(articleList[i].APK > maxAPKFound){
+      maxAPKFound = articleList[i].APK
+    }
   }
+
+  // Setting APKScore
+  for (var i = 0; i < articleList.length; i++) {
+    articleList[i].APKScore = Math.ceil((articleList[i].APK/maxAPKFound)*100)
+  }
+
   addArticlesToDB(memDB,articleList);
   addArticlesToDB(db,articleList)
 }
@@ -483,11 +498,11 @@ function openEndPoints(){
   app.get('/dump', (req, res) => {
     res.set('Content-Type', 'text/html');
     var listHtml = "<!DOCTYPE html><html lang=\"en\"><head><title>APK DUMP</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\"><script src=\"https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script><script src=\"https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js\"></script></head><body>";
-    for(var i = 0; i<500; i++){
+    for(var i = 0; i<18000; i++){
       var prod = articleList[i];
-      listHtml = listHtml + "<li class=\"list-group-item\">"+ (i+1) +". "+ prod.Namn +" " + prod.APK + " APK  <a href="+addURLtoArticlceObject(prod)+">"+addURLtoArticlceObject(prod)+"</a></li>"
+      listHtml = listHtml + "<li class=\"list-group-item\">"+ (i+1) +". "+ prod.Namn +" " + prod.APKScore + " APK-Score (1-100)  <a href="+addURLtoArticlceObject(prod)+">"+addURLtoArticlceObject(prod)+"</a></li>"
     }
-    res.send('<div class=\"container\"><h2>TOP 10 APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
+    res.send('<div class=\"container\"><h2>TOP APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
   })
 
   // Return top :numberOfArticles from SQLITE3 in-memory
