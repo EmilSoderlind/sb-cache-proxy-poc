@@ -609,15 +609,12 @@ function openEndPoints(){
     }else{
       var start = new Date()
       res.json(articleList.slice(0, req.params.numberOfArticles))
-<<<<<<< HEAD
-      console.info(new Date() - start)
-=======
+
       console.info('Array | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
 
       var fileName = "results/m1_"+req.params.numberOfArticles+".txt";
       fs.appendFileSync(fileName, (new Date() - start)+"\n");
 
->>>>>>> 7420262b8475d1ba2ec0fbd22cad9af493cdf667
     }
 
   })
