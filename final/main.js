@@ -12,6 +12,7 @@ const app = express()
 const port = 3000
 
 // Postgres
+/*
 const { Client } = require('pg')
 
 const client = new Client({
@@ -39,7 +40,7 @@ function runPostgresSQLquery(query){
     }
   })
 }
-
+*/
 
 
 
@@ -636,7 +637,7 @@ function main(){
 
   }
 
-  runPostgresSQLquery("select version();")
+//  runPostgresSQLquery("select version();")
 
   console.log("Main() - DONE")
 }
