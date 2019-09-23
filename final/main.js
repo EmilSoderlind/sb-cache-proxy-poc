@@ -11,6 +11,39 @@ const express = require('express')
 const app = express()
 const port = 3000
 
+// Postgres
+const { Client } = require('pg')
+
+const client = new Client({
+  host: 'localhost',
+  port: 5433,
+})
+
+function runPostgresSQLquery(query){
+  client.connect(err => {
+    if (err) {
+      console.error('connection error', err.stack)
+    } else {
+      console.log('connected')
+      // callback
+      client.query(query, (err, res) => {
+        if (err) {
+          console.log(err.stack)
+        } else {
+          console.log(res.rows)
+
+
+          client.end();
+        }
+      })
+    }
+  })
+}
+
+
+
+
+// SQLITE
 const sqlite3 = require('sqlite3').verbose();
 var db;
 var memDB = new sqlite3.Database(':memory:');
@@ -601,6 +634,8 @@ function main(){
     parseSB_API()
 
   }
+
+  runPostgresSQLquery("select version();")
 
   console.log("Main() - DONE")
 }
