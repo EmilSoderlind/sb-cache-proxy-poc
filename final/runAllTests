@@ -9,7 +9,7 @@ m2=2
 m3=3
 m4=4
 #hostName="http://skruvdragarn.duckdns.org:"
-hostName="172.20.10.2:"
+hostName="localhost:"
 
 
 #curl "${hostName}3000/array/20" > /dev/null 2>&1
