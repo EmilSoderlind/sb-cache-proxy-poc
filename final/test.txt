@@ -9,3 +9,4 @@
 8. Fun stats in table (Total products over time, average APK by category)
 9. Add SPRIT-kategori för oss dödliga som inte vet vad punsch är.
 10. Parsa: "Tillfälligt slut hos leverantör" via skreeejp
+
