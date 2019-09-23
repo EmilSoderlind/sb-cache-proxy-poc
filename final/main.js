@@ -1,7 +1,9 @@
 var request = require('request');
 let xmlParser = require('xml2json');
 var slugify = require('slugify')
+
 var fs = require("fs");
+var os = require("os");
 
 var startDate = new Date()
 
@@ -517,6 +519,9 @@ function openEndPoints(){
             res.send(rows);
             console.info('Sqlite3 (in-memory) | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
 
+            var fileName = "results/m2_"+req.params.numberOfArticles+".txt";
+            fs.appendFileSync(fileName, (new Date() - start)+"\n");
+
           });
         });
   })
@@ -535,6 +540,9 @@ function openEndPoints(){
             }
             res.send(rows);
             console.info('Sqlite3 (from disk) | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+
+            var fileName = "results/m3_"+req.params.numberOfArticles+".txt";
+            fs.appendFileSync(fileName, (new Date() - start)+"\n");
 
             db.close((err) => {
               if (err) {
@@ -569,6 +577,10 @@ function openEndPoints(){
       var start = new Date()
       res.json(articleList.slice(0, req.params.numberOfArticles))
       console.info('Array | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+
+      var fileName = "results/m1_"+req.params.numberOfArticles+".txt";
+      fs.appendFileSync(fileName, (new Date() - start)+"\n");
+
     }
 
   })
