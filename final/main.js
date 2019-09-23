@@ -12,35 +12,41 @@ const app = express()
 const port = 3000
 
 // Postgres
-/*
 const { Client } = require('pg')
 
-const client = new Client({
+var client = new Client({
   host: 'localhost',
   port: 5433,
 })
 
 function runPostgresSQLquery(query){
-  client.connect(err => {
-    if (err) {
-      console.error('connection error', err.stack)
-    } else {
-      console.log('connected')
-      // callback
-      client.query(query, (err, res) => {
-        if (err) {
-          console.log(err.stack)
-        } else {
-          console.log(res.rows)
+
+    client.connect(err => {
+      if (err) {
+        console.error('connection error', err.stack)
+      } else {
+        console.log('connected')
+        // callback
 
 
-          client.end();
-        }
-      })
-    }
-  })
+        client.query(query, (err, res) => {
+          if (err) {
+            console.log(err.stack)
+          } else {
+            console.log(res.rows)
+            client.end();
+            return res.rows
+          }
+        })
+
+
+
+      }
+    })
+
+
 }
-*/
+
 
 
 
@@ -344,16 +350,29 @@ function createDB(dbObj){
 
   console.log("Creating artikel table")
   dbObj.serialize(() => {
-    dbObj.all(`CREATE TABLE artikel (nr integer primary key, Artikelid integer,Varnummer integer,Namn text,Namn2 text,Prisinklmoms REAL,Pant REAL,Volymiml REAL,PrisPerLiter REAL,Saljstart text,Utgatt text,Varugrupp text,Typ text,Stil text,Forpackning text,Forslutning text,Ursprung text,Ursprunglandnamn text,Producent text,Leverantor text,Argang integer,Provadargang text,Alkoholhalt REAL,Sortiment text,SortimentText text,Ekologisk REAL,Etiskt REAL,Koscher text,RavarorBeskrivning text,URL text,APKMedPant REAL, APK REAL);`, (err, rows) => {
+    dbObj.all(`CREATE TABLE artikel (nr integer primary key, artikelid integer,varnummer integer,namn text,namn2 text,prisinklmoms real,pant real,volymiml real,prisperliter real,saljstart text,utgatt text,varugrupp text,typ text,stil text,forpackning text,forslutning text,ursprung text,ursprunglandnamn text,producent text,leverantor text,argang integer,provadargang text,alkoholhalt real,sortiment text,sortimentText text,ekologisk real,etiskt real,koscher text,ravarorbeskrivning text,url text,apkmedpant real, apk real);`, (err, rows) => {
       if (err) {console.error(err.message)}
     });
   });
+}
 
+function createPostgresDB(){
+  // open the database
+  console.log("Trying to connect to postgres DB")
+
+
+
+
+  console.log("Creating artikel table - postgres")
+
+
+  runPostgresSQLquery(`CREATE TABLE artikel (nr text, artikelid text,varnummer text,namn text,namn2 text,prisinklmoms real,pant real,volymiml real,prisperliter real,saljstart text,utgatt text,varugrupp text,typ text,stil text,forpackning text,forslutning text,ursprung text,ursprunglandnamn text,producent text,leverantor text,argang text,provadargang text,alkoholhalt real,sortiment text,sortimentText text,ekologisk real,etiskt real,koscher text,ravarorbeskrivning text,url text,apkmedpant real, apk real);`);
 
 }
 
 // Add APK + URL to list of article objects
 function processArticleObjects(articleList){
+  console.log("processArticleObjects()")
   var count = 0;
 
   db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
@@ -375,15 +394,21 @@ function processArticleObjects(articleList){
     if(articleList[i].APK > maxAPKFound){
       maxAPKFound = articleList[i].APK
     }
+    console.log("processing.")
   }
 
   // Setting APKScore
   for (var i = 0; i < articleList.length; i++) {
+    console.log("adding apk-score.")
     articleList[i].APKScore = Math.ceil((articleList[i].APK/maxAPKFound)*100)
   }
 
+  console.log("adding to sqlite-mem")
   addArticlesToDB(memDB,articleList);
-  addArticlesToDB(db,articleList)
+  console.log("adding to sqlite-disk")
+  addArticlesToDB(db,articleList);
+  console.log("adding to sqlite-postgres")
+  addArticlesToPostgresDB(articleList);
 }
 
 function addAPKtoArticleObject(articleObject) {
@@ -494,6 +519,108 @@ function addArticlesToDB(dbObj, articleList){
   });
 }
 
+function addArticlesToPostgresDB(articleList){
+
+  addAllArticlesSQLQuery = "INSERT INTO artikel (nr,artikelid,varnummer,namn,namn2,prisinklmoms,pant,volymiml,prisperliter,saljstart,utgatt,varugrupp,typ,stil,forpackning,forslutning,ursprung,ursprunglandnamn,producent,leverantor,argang,provadargang,alkoholhalt,sortiment,sortimenttext,ekologisk,etiskt,koscher,ravarorbeskrivning,url,apkmedpant,apk) VALUES";
+
+  for(var index = 0; index < articleList.length; index++){
+    var addArticleSQLQuery =  "('"+
+    articleList[index].nr +"','"+
+    articleList[index].Artikelid +"','"+
+    articleList[index].Varnummer +"','"+
+    String(articleList[index].Namn).replaceAll("\'","") +"','"+
+    String(articleList[index].Namn2).replaceAll("\'","") +"','"+
+    articleList[index].Prisinklmoms +"','"+
+    articleList[index].Pant +"','"+
+    articleList[index].Volymiml +"','"+
+    articleList[index].PrisPerLiter +"','"+
+    articleList[index].Saljstart +"','"+
+    articleList[index].Utgått +"','"+
+    articleList[index].Varugrupp +"','"+
+    articleList[index].Typ +"','"+
+    articleList[index].Stil +"','"+
+    articleList[index].Forpackning +"','"+
+    articleList[index].Forslutning +"','"+
+    String(articleList[index].Ursprung).replaceAll("\'","") +"','"+
+    String(articleList[index].Ursprunglandnamn).replaceAll("\'","") +"','"+
+    String(articleList[index].Producent).replaceAll("\'","") +"','"+
+    String(articleList[index].Leverantor).replaceAll("\'","") +"','"+
+    articleList[index].Argang +"','"+
+    articleList[index].Provadargang +"',"+
+    articleList[index].Alkoholhalt +",'"+
+    articleList[index].Sortiment +"','"+
+    articleList[index].SortimentText +"','"+
+    articleList[index].Ekologisk +"','"+
+    articleList[index].Etiskt +"','"+
+    articleList[index].Koscher +"','"+
+    String(articleList[index].RavarorBeskrivning).replaceAll("\'","") +"','"+
+    articleList[index].URL.replaceAll("'","") +"',"+
+    articleList[index].APKMedPant +","+
+    articleList[index].APK +")"
+
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("[object Object]","null");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("''","'");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll(" '", "");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("' ", "");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("'null'", "null");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("'undefined'", "null");
+    addArticleSQLQuery = addArticleSQLQuery.replaceAll("', "," ");
+
+    if(index != (articleList.length-1)){
+      addArticleSQLQuery = addArticleSQLQuery + ",";
+    }
+    addAllArticlesSQLQuery = addAllArticlesSQLQuery + addArticleSQLQuery;
+  }
+
+  addAllArticlesSQLQuery = addAllArticlesSQLQuery + ";"
+
+  console.log("Trying to send query: " + addAllArticlesSQLQuery)
+
+
+      client.connect(err => {
+        console.log("in client.connect(err =>");
+        if (err) {
+          console.error('connection error', err.stack)
+        } else {
+          console.log('Connected to postgres: Trying to run addAllArticlesSQLQuery')
+          // callback
+
+
+          client.query(addAllArticlesSQLQuery, (err, res) => {
+            if (err) {
+              console.log("error from sending postgres-query: " + err.stack)
+            } else {
+              console.log("succesfully ran postgres-query!")
+              console.log(res.rows)
+
+              client.end()
+              console.log("Articles added to postgres-DB");
+              console.log("Parse + DB time: %dms", new Date() - startDate)
+            }
+          })
+
+        }
+      })
+
+  /*
+  dbObj.serialize(() => {
+    dbObj.all(addAllArticlesSQLQuery, (err, rows) => {
+      if (err) {
+        console.log("Adding to DB Error:")
+        console.error(err.message);
+      }
+
+      console.log("Articles added to DB");
+      console.log("Parse + DB time: %dms", new Date() - startDate)
+    });
+  });
+  */
+
+
+
+
+}
+
 function parseSB_API(){
   console.log("Parsing from SB-API starting.")
   request('https://www.systembolaget.se/api/assortment/products/xml', function (error, response, body) {
@@ -533,12 +660,12 @@ function openEndPoints(){
   // HTML endpoint with top 500 from ARRAY
   app.get('/dump', (req, res) => {
     res.set('Content-Type', 'text/html');
-    var listHtml = "<!DOCTYPE html><html lang=\"en\"><head><title>APK DUMP</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\"><script src=\"https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script><script src=\"https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js\"></script></head><body>";
+    var listHtml = "<!DOCTYPE html><html lang='en'><head><title>APK DUMP</title><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><link rel='stylesheet' href='https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css'><script src='https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script><script src='https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js'></script></head><body>";
     for(var i = 0; i<18000; i++){
       var prod = articleList[i];
-      listHtml = listHtml + "<li class=\"list-group-item\">"+ (i+1) +". "+ prod.Namn +" " + prod.APKScore + " APK-Score (1-100)  <a href="+addURLtoArticlceObject(prod)+">"+addURLtoArticlceObject(prod)+"</a></li>"
+      listHtml = listHtml + "<li class='list-group-item'>"+ (i+1) +". "+ prod.Namn +" " + prod.APKScore + " APK-Score (1-100)  <a href="+addURLtoArticlceObject(prod)+">"+addURLtoArticlceObject(prod)+"</a></li>"
     }
-    res.send('<div class=\"container\"><h2>TOP APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
+    res.send("<div class='container'><h2>TOP APK</h2><ul class='list-group'>' + listHtml + '</ul></div></body></html>");
   })
 
   // Return top :numberOfArticles from SQLITE3 in-memory
@@ -588,6 +715,43 @@ function openEndPoints(){
       });
   })
 
+
+    // Return top :numberOfArticles from POSTGRES
+    app.get('/postgres/:numberOfArticles', (req, res) => {
+      var start = new Date()
+
+      client = new Client({
+        host: 'localhost',
+        port: 5433,
+      })
+
+      client.connect(err => {
+        if (err) {
+          console.error('connection error', err.stack)
+        } else {
+          console.log('connected')
+          // callback
+
+          var query = `SELECT * FROM artikel ORDER BY APK DESC LIMIT `+ req.params.numberOfArticles +`;`
+
+          client.query(query, (err, result) => {
+            if (err) {
+              console.log(err.stack)
+            } else {
+              res.send(result.rows);
+              console.info('Postgres | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+
+              var fileName = "results/m4_"+req.params.numberOfArticles+".txt";
+              fs.appendFileSync(fileName, (new Date() - start)+"\n");
+              client.end();
+
+            }
+          })
+
+        }
+      })
+    })
+
   app.get('/', (req, res) => {
     res.send("/array/# \n\n /sqlite-mem/# \n\n /sqlite-disk/#")
   })
@@ -630,14 +794,13 @@ function main(){
   if(process.argv[2] == "parse"){
 
     console.log("Performing reparse!")
+    //createPostgresDB();
     createDB(memDB);
 
     initializeDBFile();
     parseSB_API()
 
   }
-
-//  runPostgresSQLquery("select version();")
 
   console.log("Main() - DONE")
 }
