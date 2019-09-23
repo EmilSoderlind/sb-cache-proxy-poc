@@ -1,0 +1,30 @@
+#!/bin/bashs
+
+declare -a testAmounts=("1" "10") # "100" "1000" "10000" "18000")
+
+numberOfTests=10
+
+m1=1
+m2=2
+m3=3
+m4=4
+#hostName="http://skruvdragarn.duckdns.org:"
+hostName="172.20.10.2:"
+
+
+#curl "${hostName}3000/array/20" > /dev/null 2>&1
+
+#extract loop var
+
+for i in "${testAmounts[@]}"
+do
+  echo $i
+
+  for (( j=1; j<=$numberOfTests; j++ ))
+  do
+    curl "${hostName}3000/array/${i}"
+  done
+
+done
+
+exit 0

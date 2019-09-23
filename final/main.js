@@ -568,7 +568,7 @@ function openEndPoints(){
     }else{
       var start = new Date()
       res.json(articleList.slice(0, req.params.numberOfArticles))
-      console.info('Array | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+      console.info(new Date() - start)
     }
 
   })
