@@ -672,16 +672,24 @@ function openEndPoints(){
   app.get('/sqlite-mem/:numberOfArticles', (req, res) => {
     var start = new Date()
 
+    var starthr = process.hrtime()
     memDB.serialize(() => {
           memDB.all(`SELECT * FROM artikel ORDER BY APK DESC LIMIT `+ req.params.numberOfArticles +`;`, (err, rows) => {
             if (err) {
               console.error(err.message);
             }
             res.send(rows);
-            console.info('Sqlite3 (in-memory) | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+
+            var endhr = process.hrtime();
+
+            var starthrMS = starthr[0] * 1000000 + starthr[1] / 1000
+            var endhrMS = endhr[0] * 1000000 + endhr[1] / 1000
+            var elapsedMs = endhrMS - starthrMS;
 
             var fileName = "results/m2_"+req.params.numberOfArticles+".txt";
-            fs.appendFileSync(fileName, (new Date() - start)+"\n");
+            fs.appendFileSync(fileName, (elapsedMs)+"\n");
+
+            console.info('Sqlite3 (in-memory) | #articles: '+ req.params.numberOfArticles +' | Response time: ' + elapsedMs)
 
           });
         });
@@ -690,6 +698,9 @@ function openEndPoints(){
   // Return top :numberOfArticles from SQLITE3 DB-file.
   app.get('/sqlite-disk/:numberOfArticles', (req, res) => {
     var start = new Date()
+
+    var starthr = process.hrtime()
+
     db = new sqlite3.Database('./APK.db', sqlite3.OPEN_READWRITE, (err) => {
         if (err) {
           console.error("error: " + err.message);
@@ -700,10 +711,17 @@ function openEndPoints(){
               console.error(err.message);
             }
             res.send(rows);
-            console.info('Sqlite3 (from disk) | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+
+            var endhr = process.hrtime();
+
+            var starthrMS = starthr[0] * 1000000 + starthr[1] / 1000
+            var endhrMS = endhr[0] * 1000000 + endhr[1] / 1000
+            var elapsedMs = endhrMS - starthrMS;
 
             var fileName = "results/m3_"+req.params.numberOfArticles+".txt";
-            fs.appendFileSync(fileName, (new Date() - start)+"\n");
+            fs.appendFileSync(fileName, (elapsedMs)+"\n");
+
+            console.info('Sqlite3 (from disk) | #articles: '+ req.params.numberOfArticles +' | Response time: ' + elapsedMs)
 
             db.close((err) => {
               if (err) {
@@ -718,6 +736,10 @@ function openEndPoints(){
 
     // Return top :numberOfArticles from POSTGRES
     app.get('/postgres/:numberOfArticles', (req, res) => {
+
+      // ---
+      var starthr = process.hrtime()
+
       var start = new Date()
 
       client = new Client({
@@ -739,10 +761,17 @@ function openEndPoints(){
               console.log(err.stack)
             } else {
               res.send(result.rows);
-              console.info('Postgres | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+              var endhr = process.hrtime();
+
+              var starthrMS = starthr[0] * 1000000 + starthr[1] / 1000
+              var endhrMS = endhr[0] * 1000000 + endhr[1] / 1000
+              var elapsedMs = endhrMS - starthrMS;
 
               var fileName = "results/m4_"+req.params.numberOfArticles+".txt";
-              fs.appendFileSync(fileName, (new Date() - start)+"\n");
+              fs.appendFileSync(fileName, (elapsedMs)+"\n");
+
+              console.info('Postgres | #articles: '+ req.params.numberOfArticles +' | Response time: ' + elapsedMs)
+
               client.end();
 
             }
@@ -773,13 +802,18 @@ function openEndPoints(){
       res.sendStatus(204)
     }else{
       var start = new Date()
+      var starthr = process.hrtime()
       res.json(articleList.slice(0, req.params.numberOfArticles))
+      var endhr = process.hrtime();
 
-      console.info('Array | #articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+      var starthrMS = starthr[0] * 1000000 + starthr[1] / 1000
+      var endhrMS = endhr[0] * 1000000 + endhr[1] / 1000
+      var elapsedMs = endhrMS - starthrMS;
+
+      console.info('Array | #articles: '+ req.params.numberOfArticles +' | Response time: ' + elapsedMs)
 
       var fileName = "results/m1_"+req.params.numberOfArticles+".txt";
-      fs.appendFileSync(fileName, (new Date() - start)+"\n");
-
+      fs.appendFileSync(fileName, (elapsedMs)+"\n");
     }
 
   })
