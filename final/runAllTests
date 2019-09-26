@@ -1,8 +1,8 @@
 #!/bin/bashs
 
 declare -a testAmounts=("1" "10" "100" "1000" "10000" "18000")
-
-numberOfTests=3
+declare -a testURL=("array" "sqlite-mem" "sqlite-disk" "postgres")
+numberOfTests=1000
 
 m1=1
 m2=2
@@ -16,49 +16,32 @@ hostName="localhost:"
 
 #extract loop var
 
-for i in "${testAmounts[@]}"
+
+for currentDSS in "${testURL[@]}"
 do
-  echo $i
-
-  for (( j=1; j<=$numberOfTests; j++ ))
+  echo ""
+  echo "Now testing: $currentDSS"
+  for amountOfEntriesGet in "${testAmounts[@]}"
   do
-    curl "${hostName}3000/array/${i}" > /dev/null 2>&1
+    echo $amountOfEntriesGet
+
+
+    for (( j=1; j<=$numberOfTests; j++ ))
+    do
+      curl "${hostName}3000/${currentDSS}/${amountOfEntriesGet}" > /dev/null 2>&1
+
+        if [ ${j} -eq 1 -o ${j} -eq $(($numberOfTests/10*3)) -o ${j} -eq $(($numberOfTests/10*6)) -o ${j} -eq $(($numberOfTests/10*9)) ]
+        then
+          echo -n "="
+        fi
+
+        if [ ${j} -eq $numberOfTests ]
+        then
+          echo "="
+        fi
+
+    done
   done
-
 done
-
-for i in "${testAmounts[@]}"
-do
-  echo $i
-
-  for (( j=1; j<=$numberOfTests; j++ ))
-  do
-    curl "${hostName}3000/sqlite-mem/${i}" > /dev/null 2>&1
-  done
-
-done
-
-for i in "${testAmounts[@]}"
-do
-  echo $i
-
-  for (( j=1; j<=$numberOfTests; j++ ))
-  do
-    curl "${hostName}3000/sqlite-disk/${i}" > /dev/null 2>&1
-  done
-
-done
-
-#for i in "${testAmounts[@]}"
-#do
-#  echo $i
-#
-#  for (( j=1; j<=$numberOfTests; j++ ))
-#  do
-#    curl "${hostName}3000/postgres/${i}" > /dev/null 2>&1
-#  done
-#
-#done
-
 
 exit 0
