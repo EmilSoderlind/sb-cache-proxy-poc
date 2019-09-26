@@ -751,8 +751,6 @@ function openEndPoints(){
         if (err) {
           console.error('connection error', err.stack)
         } else {
-          console.log('connected')
-          // callback
 
           var query = `SELECT * FROM artikel ORDER BY APK DESC LIMIT `+ req.params.numberOfArticles +`;`
 
