@@ -1,7 +1,7 @@
 #!/bin/bashs
 
 declare -a testAmounts=("1" "10" "100" "1000" "10000" "18000")
-declare -a testURL=("array" "sqlite-mem" "sqlite-disk") #"postgres"
+declare -a testURL=("array" "sqlite-mem" "sqlite-disk" "postgres")
 numberOfTests=1000
 
 m1=1
