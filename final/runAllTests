@@ -2,7 +2,7 @@
 
 declare -a testAmounts=("1" "10" "100" "1000" "10000" "18000")
 
-numberOfTests=10
+numberOfTests=3
 
 m1=1
 m2=2
